@@ -1,161 +1,226 @@
-<div align="center"> 
-<a href="https://antriview.systems/" target="_blank"><img src="./public/antriviewslogan.png" width="750px" /></a>
-</div></br>
+# Antriview — AI Voice Interview Platform
 
-<div align="center"> 
-<a href="https://antriview.systems/" target="_blank"><img src="./public/antriviewtext.png" width="350px" /></a><br><br>
-<img src="./public/thisisantriview.png" width="750px" /><br>
-<h1 align="center"><a href="https://antriview.systems/"><strong>✦ antriview.systems ✦</strong></a></h1>
+> An autonomous AI interviewer that conducts real-time voice interviews, generates adaptive questions based on candidate profile, and produces deep feedback reports with personalized learning roadmaps.
 
-<a href="https://antriview.systems/" target="_blank"><img src="./public/antriviewpunchline.png" width="750px" /></a>
-
-<!--<h4 align="center">✦ Transform Your GitHub Journey! ✦</h4>-->
- 
-  
-`Antriview is a AI powered mock interview preparation platform that utilizes real time AI voice agents to simulate realistic interview experiences. Designed to help users practice and enhance their communication and interview skills, the platform offers an immersive environment where users interact with voice based AI agents, receive instant feedback, and track their improvement over time.`
-<hr><img src="./public/Interview Page.png" /></div>
-
-## 🚀 Features
-
-### 🎙️ 1. Simulate Real-Time Interviews  
-Experience hyper-realistic, **voice-based interviews** with intelligent AI agents that mimic real interviewers — pressure and unpredictability included.
-
-### 🧠 2. Personalized Feedback  
-Get **instant, actionable insights** based on your tone, confidence, and clarity using real-time speech analysis.  
-Antriview gives you the feedback that real interviewers never do — brutally honest, growth-focused, and always improving.
-
-### 📊 3. Track Your Progress  
-Monitor your communication skills with **visual analytics**, track your journey, and pinpoint **strengths and weaknesses**. Know exactly where you're growing — and where you need to level up.
-
-### ⚡ 4. Fast Interview Creation  
-Create full mock interviews in seconds using **conversational AI**.  
-Skip the setup — just speak, and your personalized session begins.
-
-### 🏫 5. Scalable for Institutions & Professionals  
-Built for **universities, bootcamps, and career services**. Antriview offers bulk access, admin dashboards, and **performance insights** at scale.  
-Because the future of hiring prep is not 1:1 — it’s scalable, smart, and voice-powered.
+**Live demo:** `http://localhost:3000` · **Stack:** Next.js 15 · Firebase · Vapi AI · Google Gemini · TypeScript
 
 ---
 
-## 🛠️ Tech Stack
+## What It Does
 
-### 🔷 Frontend (UI & Real-Time Voice Interaction)
-- **Next.js** – React-based framework for scalable frontends  
-- **TypeScript** – Type-safe development  
-- **Tailwind CSS** – Utility-first CSS for responsive styling  
-- **shadcn/ui** – Accessible, modern UI components  
-- **Vapi AI SDK** – Real-time voice assistant integration  
-- **Zod** – Schema validation & safe form handling
+Antriview replaces the static mock interview experience with a context-aware AI system that adapts to who the candidate is — their experience level, resume, and target role — before a single question is asked.
 
-### 🔶 Backend (Logic & AI Operations)
-- **Next.js API Routes** – Serverless backend logic  
-- **Firebase Authentication** – Secure auth (Email, Google)  
-- **Firebase Cloud Functions** – AI handling, session management, feedback logic
-
-### 🔵 Database (Persistent User & Interview Data)
-- **Firebase Firestore** – NoSQL, real-time DB  
-  - Stores: user profiles, interview responses, generated questions, feedback reports
-
-### 🤖 AI & NLP (Voice Simulation & Feedback Intelligence)
-- **Vapi AI** – Voice-based AI interviewer (input/output)  
-- **Google Gemini API** – Natural language processing to:  
-  - Generate adaptive interview questions  
-  - Analyze spoken responses  
-  - Deliver smart, contextual feedback  
-  - Continuously learn from user performance
-
----
-
-<div align="center"> 
-  <h3 align="center"><strong>💡Antriview is not just a product. It’s a new standard in interview preparation.</strong></h3>
-Your Ruthless, Real-Time AI Interviewer — Built for Pressure. Not Just Practice.
-</div>
-
-<hr>
-<!--
-# 🚀 Getting Started Setup Procedure ⚙️ -->
-
-<!--This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-### Environment Setup
-
-1. Copy the example environment file:
-```bash
-cp .env.example .env.local
+```
+Candidate fills profile → AI generates adaptive questions → Voice interview (Vapi) →
+Transcript analyzed → Gemini produces deep feedback → Personalized learning roadmap
 ```
 
-2. Fill in your actual configuration values in `.env.local`:
-   - Firebase configuration (API keys, project ID, etc.)
-   - Google AI API key
-   - VAPI configuration
+The feedback is not a score card. It is a structured report with filler word detection, speaking pace analysis, identified skill gaps, a milestone-based learning plan, and course recommendations — all generated in a single Gemini call from the live transcript.
 
-**Important**: Never commit `.env.local` or any environment files containing real API keys to version control.
+---
 
-### Development
+## Architecture
 
-First, run the development server:
+```
+┌─────────────────────────────────────────────────────────┐
+│                     Next.js 15 App                      │
+│  (App Router, React Server Components, Server Actions)  │
+└────────────┬────────────────────────┬───────────────────┘
+             │                        │
+    ┌────────▼────────┐     ┌─────────▼──────────┐
+    │  Firebase Auth  │     │  Firestore DB       │
+    │  Session cookies│     │  users / interviews │
+    │  Admin SDK      │     │  / feedback         │
+    └─────────────────┘     └─────────────────────┘
+             │                        │
+    ┌────────▼────────┐     ┌─────────▼──────────┐
+    │   Vapi AI SDK   │     │  Google Gemini      │
+    │  Real-time STT  │     │  Question generation│
+    │  TTS voice agent│     │  Feedback + roadmap │
+    │  Transcript     │     │  Structured output  │
+    └─────────────────┘     └────────────────────-┘
+```
+
+---
+
+## Key Features
+
+### 1. Adaptive Interview Generation
+The system classifies candidates as Student, Fresher (0–2 years), or Professional (2+ years). Each type gets a different Gemini prompt, different scoring rubric, and a different estimated duration (15 / 30 / 45 minutes). Freshers and Professionals paste their resume and target JD — Gemini uses both to generate questions specific to their background.
+
+```typescript
+// Different focus instructions per user type
+if (userType === 'student') {
+  focusInstructions = `Focus on communication, academic projects,
+  problem-solving approach. NOT deeply technical.`
+} else if (userType === 'professional') {
+  focusInstructions = `Leadership, system design, stakeholder management,
+  strategic thinking. Challenging and in-depth.`
+}
+```
+
+### 2. Real-Time Voice Interviews (Vapi)
+Interviews run as live voice calls via the Vapi AI SDK. The assistant uses ElevenLabs TTS, Deepgram STT, and GPT-4 as the conversation model. The full transcript is captured and passed downstream for analysis.
+
+### 3. Deep Feedback in a Single AI Call
+After the interview, one Gemini call produces the entire report:
+
+```typescript
+const { object } = await generateObject({
+  model: google('gemini-2.0-flash-001'),
+  schema: enhancedFeedbackSchema,  // Zod-validated structured output
+  prompt: buildFeedbackPrompt(transcript, userType, role, resumeText),
+});
+```
+
+The schema enforces:
+- Category scores with comments (different categories per user type)
+- Filler word analysis (detected client-side from transcript before the call)
+- Speaking pace and clarity rating
+- Skill gaps as tagged items
+- A learning plan with milestones, estimated hours, and resource links
+- Course recommendations per skill gap (free and paid)
+
+### 4. User-Type-Specific Scoring
+Students are scored on Career Readiness and Learning Ability. Professionals are scored on Leadership & Impact and System Design. The scoring prompt is dynamically built from `getFeedbackCategories(userType)` so each report is relevant to the candidate's actual stage.
+
+### 5. Firestore Data Model
+
+```
+users/{uid}
+  └─ profile: { userType, targetRole, industry }
+
+interviews/{id}
+  └─ { role, level, techstack, questions[], userType, duration,
+       resumeText, jdText, userId, createdAt }
+
+feedback/{id}
+  └─ { totalScore, categoryScores[], strengths[], areasForImprovement[],
+       transcriptAnalysis, skillGaps[], learningPlan, courseRecommendations[] }
+```
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 15.3 (App Router, Turbopack) |
+| Language | TypeScript |
+| Auth + DB | Firebase Auth + Firestore (Admin SDK server-side) |
+| Voice AI | Vapi AI SDK — Deepgram STT, ElevenLabs TTS, GPT-4 |
+| AI/LLM | Google Gemini 2.0 Flash via Vercel AI SDK |
+| Schema validation | Zod (structured outputs) |
+| UI | Tailwind CSS, shadcn/ui |
+| Deployment | Vercel-ready |
+
+---
+
+## Project Structure
+
+```
+antriview/
+├── app/
+│   ├── (auth)/                  # Sign in / Sign up pages
+│   ├── (root)/
+│   │   ├── page.tsx             # Dashboard
+│   │   ├── profile/page.tsx     # Profile setup (3-step wizard)
+│   │   └── interview/
+│   │       ├── page.tsx         # Interview generation
+│   │       └── [id]/
+│   │           ├── page.tsx     # Conduct interview (Vapi call)
+│   │           └── feedback/    # Enhanced feedback report
+│   └── api/vapi/generate/       # POST endpoint for Vapi → Gemini
+├── components/
+│   ├── Agent.tsx                # Voice call lifecycle + transcript capture
+│   ├── InterviewGenerationForm.tsx   # Multi-step adaptive form
+│   ├── InterviewGenerationFormWrapper.tsx  # Client wrapper
+│   └── ProfileSetup.tsx         # User classification wizard
+├── lib/
+│   └── actions/
+│       ├── auth.action.ts       # Auth + profile management
+│       └── general.action.ts   # Interviews + enhanced feedback
+└── constants/
+    └── index.ts                 # Vapi config, Zod schemas, category logic
+```
+
+---
+
+## How I Built This
+
+This project was built using Claude as an AI coding partner — not as a code generator to paste blindly, but as a collaborator to decompose problems, review output, and maintain a high bar.
+
+The workflow throughout:
+
+1. **Decompose first.** Before writing any code, I mapped the full data flow: what gets collected, where it goes, what each API call needs to return. The architecture diagram above came before any implementation.
+
+2. **One concern per change.** Each modification was scoped — update the Zod schema, then update the prompt, then update the Firestore write, then update the UI. Not all at once.
+
+3. **Review AI output critically.** When Claude generated the feedback prompt, I read every instruction it was giving Gemini and adjusted the strictness, the fallback handling, and the filler word detection logic. The `countFillerWords` function was rewritten to use proper word-boundary regex after reviewing the first output.
+
+4. **Test the data at each layer.** After each feature, I checked Firestore directly to verify the document had the right shape before moving to the UI layer.
+
+5. **Keep the schema tight.** Using Zod `enhancedFeedbackSchema` with `generateObject` means if Gemini returns a malformed response, it fails loudly at the schema boundary — not silently in the UI.
+
+---
+
+## Setup
+
+```bash
+git clone https://github.com/your-username/antriview
+cd antriview
+npm install
+```
+
+Create `.env.local`:
+
+```env
+# Firebase Client
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+
+# Firebase Admin
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=""
+
+# Vapi
+NEXT_PUBLIC_VAPI_WEB_TOKEN=
+NEXT_PUBLIC_VAPI_WORKFLOW_ID=
+
+# Gemini
+GOOGLE_GENERATIVE_AI_API_KEY=
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-``` -->
+```
 
-<!-- Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What's Next
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The current version covers the full interview loop. The natural next layer is what SViam is building at a deeper level:
 
-## Learn More
+- **Context across rounds** — storing interview history per candidate and adjusting question difficulty and focus based on prior performance
+- **Company-specific hiring bar** — letting companies define what "good" looks like for their role and calibrating the scoring rubric against their actual bar
+- **Proctoring signals** — detecting when a candidate is reading from another screen, using unusual response patterns, or switching away during the interview
+- **Coding interviews** — extending the voice layer with a live code editor and real-time evaluation of the solution
 
-To learn more about Next.js, take a look at the following resources:
+These are hard problems. The architecture here — Vapi for real-time voice, Gemini for structured reasoning, Firestore for fast read/write — is a solid foundation for all of them.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## About
 
- ## Deploy on Vercel
+Built as a demonstration of AI-native engineering: using AI tools to ship fast, staying in control of the output, and maintaining a high bar for what goes to production.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The goal was not to generate code. The goal was to build something that works.
 
-### Important: Environment Variables for Production
+---
 
-When deploying to Vercel or any other platform, make sure to add all environment variables from your `.env.local` file to your deployment platform's environment variables section:
-
-1. Go to your Vercel dashboard
-2. Select your project
-3. Go to Settings → Environment Variables
-4. Add all the variables from `.env.local` -->
-
-<!-- **Required Environment Variables:**
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_PRIVATE_KEY`
-- `FIREBASE_CLIENT_EMAIL`
-- `NEXT_PUBLIC_FIREBASE_API_KEY`
-- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-- `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`
-- `GOOGLE_GENERATIVE_AI_API_KEY`
-- `NEXT_PUBLIC_VAPI_WEB_TOKEN`
-- `NEXT_PUBLIC_VAPI_WORKFLOW_ID` -->
-
-<!-- Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
--->
-
-<!-- ## 👨‍💻 Built By
-
-**Ashutosh Kumar**  
-[🌐 www.ashutoshkumar.me](https://www.ashutoshkumar.me)  
-[💻 GitHub: @codeaashu](https://github.com/codeaashu)  
-🆔 College ID: **17427** -->
-
+*Built with Next.js, Firebase, Vapi AI, and Google Gemini.*
